@@ -1,0 +1,24 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SirCollypso/flowey.git"
+  },
+  "author": "Amin Jalilov",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SirCollypso/flowey/issues"
+  },
+  "homepage": "https://github.com/SirCollypso/flowey#readme",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "openai": "^4.76.3"
+  }
+}
