@@ -2,9 +2,14 @@ import OpenAI from 'openai';
 import express from 'express';
 import os from 'os';
 import fs from 'fs';
+import path from 'path';
+import { exec } from 'child_process';
 import 'dotenv/config';
 
 const PORT = 8080;
+
+const ASSETS_DIR = path.resolve('assets');
+const audioFile = path.join(ASSETS_DIR, 'latest_speech.mp3');
 
 // Set up an Express app and enable JSON parsing
 const app = express();
@@ -51,7 +56,15 @@ app.post('/sensors', async (req, res) => {
             'You must pretend that you are a lovely flower. You are connected to sensors attached to a real plant. You will get updates each time some sensor is triggered.'
         )
         .then((response) => {
-            console.log(response);
+            console.log(response.message);
+            textToSpeech(response.message, audioFile)
+            .then(() => {
+                exec(`cvlc --play-and-exit ${audioFile}`, (error, _, __) => {
+                    if (error !== null) {
+                        console.log(`exec error: ${error}`);
+                    }
+                });
+            })
         })
         .catch((error) => {
             console.log('An error occurred while processing your request: ' + (error.response ? error.response.data : error.message));
@@ -122,4 +135,14 @@ function invokeAssistant(
             message: answer
         };
     });
+}
+
+async function textToSpeech(text, outputFile) {
+    const response = await openai.audio.speech.create({
+        model: 'tts-1',
+        voice: 'onyx',
+        input: text,
+    });
+    const buffer = Buffer.from(await response.arrayBuffer());
+    fs.writeFileSync(outputFile, buffer);
 }
