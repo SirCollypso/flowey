@@ -37,6 +37,8 @@ let currently_speaking = false;
 // Keep track of the last touch sensor state
 let last_touch = 0;
 
+let mood = 0;
+
 invokeAssistant(
     assistant,
     thread_id,
@@ -60,6 +62,7 @@ invokeAssistant(
     .then(() => {
         exec(`afplay ${audioFile}`, (error, _, __) => {
             currently_speaking = false;
+            mood = 1
             if (error !== null) {
                 console.log(`exec error: ${error}`);
             }
@@ -72,6 +75,8 @@ invokeAssistant(
 
 let last_soil_value = -1
 let last_light_value = -1
+
+
 
 // Endpoint that receives sensor data
 app.post('/sensors', async (req, res) => {
@@ -130,9 +135,18 @@ app.post('/sensors', async (req, res) => {
                 - Light intensity: ${light}
             Assume that the interactor does not know the existence of the sensors. Do not mention numerical values. 
             Based on the light or soil or touch input, express your feelings about the current state and, if needed, ask for changes to improve your well-being.
+            Occasionally you can make jokes about plant. 
             Respond with one sentence. 
             `
     if (!currently_speaking) {
+        if(touch == 0 || light_diff < 0 || soil_diff < 0) {
+            mood = 2
+        } else if(touch == 1 || light_diff > 0 || soil_diff > 0) {
+            mood = 0
+        } else {
+            mood = 1
+        }
+        currently_speaking = true;
         console.log(message);
 
         invokeAssistant(
@@ -142,7 +156,6 @@ app.post('/sensors', async (req, res) => {
         )
         .then((response) => {
             console.log(response.message);
-            currently_speaking = true;
             textToSpeech(response.message, audioFile)
             .then(() => {
                 return playAudio(audioFile);
@@ -150,6 +163,7 @@ app.post('/sensors', async (req, res) => {
             .then(() => {
                 // Lock is released only after the audio finishes playing
                 currently_speaking = false;
+                mood = 1;
             })
             .catch((error) => {
                 console.error('Error while processing speech playback:', error);
@@ -166,6 +180,12 @@ app.post('/sensors', async (req, res) => {
     
     res.sendStatus(200);
 
+});
+
+app.get('/mood', (req, res) => {
+    // console.log(mood)
+    // Respond with the random state
+    res.json({ mood });
 });
 
 // Fetch an assistant by name or create one if it doesn't exist
@@ -206,7 +226,7 @@ function invokeAssistant(
   role = 'assistant',
   instructions = 'A lovely flower',
   model = 'gpt-4o-mini',
-  temperature = 0.3
+  temperature = 0.5
 ) {
     return addMessageToThread(thread_id, { role: role, content: prompt })
     .then(() => {
@@ -236,7 +256,7 @@ function invokeAssistant(
 async function textToSpeech(text, outputFile) {
     const response = await openai.audio.speech.create({
         model: 'tts-1',
-        voice: 'onyx',
+        voice: 'nova',
         input: text,
     });
     const buffer = Buffer.from(await response.arrayBuffer());
