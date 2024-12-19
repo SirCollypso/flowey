@@ -42,10 +42,10 @@ def normalize(value):
     return round(normalized_value)
 
 # Thresholds
-SOIL_WET = 50
+SOIL_WET = 35
 SOIL_DRY = 90
-LIGHT_DARK = 30
-LIGHT_BRIGHT = 50
+LIGHT_DARK = 15
+LIGHT_BRIGHT = 35
 
 # Determine the light state (1 = dark, 2 = normal, 3 = bright)
 def determine_light_state(light_value):
